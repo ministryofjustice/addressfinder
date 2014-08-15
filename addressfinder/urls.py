@@ -11,10 +11,8 @@ router.register(r'addresses', views.AddressViewSet)
 
 
 urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'addressfinder.views.home', name='home'),
-    # url(r'^blog/', include('blog.urls')),
-
+    url(r'^api/postcodes/(?P<postcode>[a-zA-Z0-9\s]+)/$',
+        views.PostcodeView.as_view()),
     url(r'^api/', include(router.urls)),
 
     url(r'^admin/', include(admin.site.urls)),

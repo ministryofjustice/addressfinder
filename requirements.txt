@@ -1,6 +1,5 @@
 Django==1.7c2
 dateutils==0.6.6
-django-filter==0.7
 djangorestframework==2.3.14
 psycopg2==2.5.3
 python-dateutil==2.2

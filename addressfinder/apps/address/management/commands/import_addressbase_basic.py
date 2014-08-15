@@ -1,10 +1,10 @@
 import os
 import csv
-from decimal import Decimal
-
-from dateutil.parser import parse as parsedate
 
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.gis.geos import Point
+
+from dateutil.parser import parse as parsedate
 
 from address.models import Address
 
@@ -65,11 +65,6 @@ class Command(BaseCommand):
         "rpc"
     ]
 
-    decimal_fields = [
-        "x_coordinate",
-        "y_coordinate"
-    ]
-
     date_fields = [
         "start_date",
         "last_update_date",
@@ -103,15 +98,17 @@ class Command(BaseCommand):
                     if row[self.headers.index(f)] != '':
                         setattr(a, f, int(row[self.headers.index(f)]))
 
-                for f in self.decimal_fields:
-                    if row[self.headers.index(f)] != '':
-                        setattr(a, f, Decimal(row[self.headers.index(f)]))
-
                 for f in self.date_fields:
                     if row[self.headers.index(f)] != '':
                         setattr(a, f, parsedate(row[self.headers.index(f)]))
 
                 a.postcode_index = row[self.headers.index('postcode')].\
                     replace(' ', '').lower()
+
+                a.point = Point(
+                    float(row[self.headers.index('x_coordinate')]),
+                    float(row[self.headers.index('y_coordinate')]),
+                    srid=27700
+                )
 
                 a.save()

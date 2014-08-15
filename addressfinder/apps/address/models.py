@@ -1,8 +1,10 @@
-from django.db import models
+import json
+
+from django.contrib.gis.db import models
 
 
 class Address(models.Model):
-    uprn = models.CharField(max_length=12, unique=True)
+    uprn = models.CharField(max_length=12, primary_key=True)
     os_address_toid = models.CharField(max_length=20, default='', blank=True)
     rm_udprn = models.CharField(max_length=8)
     organisation_name = models.CharField(max_length=60, default='', blank=True)
@@ -19,11 +21,10 @@ class Address(models.Model):
         max_length=35, default='', blank=True)
     dependent_locality = models.CharField(
         max_length=35, default='', blank=True)
+    point = models.PointField()
     postcode = models.CharField(max_length=8)
     postcode_index = models.CharField(max_length=7, db_index=True)
     postcode_type = models.CharField(max_length=1)
-    x_coordinate = models.DecimalField(max_digits=8, decimal_places=2)
-    y_coordinate = models.DecimalField(max_digits=9, decimal_places=2)
     rpc = models.PositiveSmallIntegerField()
     change_type = models.CharField(max_length=1)
     start_date = models.DateField()
@@ -31,6 +32,12 @@ class Address(models.Model):
     entry_date = models.DateField()
     primary_class = models.CharField(max_length=1)
     process_date = models.DateField()
+
+    objects = models.GeoManager()
+
+    @property
+    def point_geojson(self):
+        return json.loads(self.point.geojson)
 
     def __unicode__(self):
         return "%s - %s" % (self.uprn, self.postcode)
