@@ -17,11 +17,7 @@ class AddressViewSet(viewsets.ReadOnlyModelViewSet):
         postcode = self.request.QUERY_PARAMS.get('postcode', '').\
             replace(' ', '').lower()
 
-
-        if postcode is not '':
-            return self.queryset.filter(postcode_index=postcode)
-        else:
-            return self.queryset.none()
+        return self.queryset.filter(postcode_index=postcode)
 
 
 class PostcodeView(ListAPIView):
