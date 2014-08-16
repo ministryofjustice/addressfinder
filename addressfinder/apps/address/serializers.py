@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 
 class AddressSerializer(serializers.ModelSerializer):
-    point = serializers.Field(source='point_geojson')
+    point = serializers.Field(source='point_geojson_dict')
 
     class Meta:
         model = Address
