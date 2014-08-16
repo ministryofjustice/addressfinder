@@ -1,5 +1,6 @@
 import os
 import csv
+from collections import OrderedDict
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
@@ -12,65 +13,33 @@ from address.models import Address
 class Command(BaseCommand):
     args = 'CSV_FILE'
 
-    headers = [
-        "uprn",
-        "os_address_toid",
-        "rm_udprn",
-        "organisation_name",
-        "department_name",
-        "po_box_number",
-        "building_name",
-        "sub_building_name",
-        "building_number",
-        "dependent_thoroughfare_name",
-        "thoroughfare_name",
-        "post_town",
-        "double_dependent_locality",
-        "dependent_locality",
-        "postcode",
-        "postcode_type",
-        "x_coordinate",
-        "y_coordinate",
-        "rpc",
-        "change_type",
-        "start_date",
-        "last_update_date",
-        "entry_date",
-        "primary_class",
-        "process_date"
-    ]
-
-    char_fields = [
-        "uprn",
-        "os_address_toid",
-        "rm_udprn",
-        "organisation_name",
-        "department_name",
-        "po_box_number",
-        "building_name",
-        "sub_building_name",
-        "dependent_thoroughfare_name",
-        "thoroughfare_name",
-        "post_town",
-        "double_dependent_locality",
-        "dependent_locality",
-        "postcode",
-        "postcode_type",
-        "change_type",
-        "primary_class"
-    ]
-
-    integer_fields = [
-        "building_number",
-        "rpc"
-    ]
-
-    date_fields = [
-        "start_date",
-        "last_update_date",
-        "entry_date",
-        "process_date"
-    ]
+    headers = OrderedDict([
+        ("uprn", "char"),
+        ("os_address_toid", "char"),
+        ("rm_udprn", "char"),
+        ("organisation_name", "char"),
+        ("department_name", "char"),
+        ("po_box_number", "char"),
+        ("building_name", "char"),
+        ("sub_building_name", "char"),
+        ("building_number", "int"),
+        ("dependent_thoroughfare_name", "char"),
+        ("thoroughfare_name", "char"),
+        ("post_town", "char"),
+        ("double_dependent_locality", "char"),
+        ("dependent_locality", "char"),
+        ("postcode", "char"),
+        ("postcode_type", "char"),
+        ("x_coordinate", "point"),
+        ("y_coordinate", "point"),
+        ("rpc", "int"),
+        ("change_type", "char"),
+        ("start_date", "date"),
+        ("last_update_date", "date"),
+        ("entry_date", "date"),
+        ("primary_class", "char"),
+        ("process_date", "date"),
+    ])
 
     def handle(self, *args, **options):
         if len(args) == 0:
@@ -81,33 +50,33 @@ class Command(BaseCommand):
         if not os.access(filename, os.R_OK):
             raise CommandError('CSV file could not be read')
 
+        uprn_idx = self.headers.keys().index('uprn')
+        postcode_idx = self.headers.keys().index('postcode')
+        x_coord_idx = self.headers.keys().index('x_coordinate')
+        y_coord_idx = self.headers.keys().index('y_coordinate')
+
         with open(filename, 'rb') as csvfile:
             for row in csv.reader(csvfile):
-                print 'Importing UPRN %s' % row[self.headers.index('uprn')]
+                print 'Importing UPRN %s' % row[uprn_idx]
 
                 try:
-                    a = Address.objects.get(
-                        uprn=row[self.headers.index('uprn')])
+                    a = Address.objects.get(uprn=row[uprn_idx])
                 except Address.DoesNotExist:
                     a = Address()
 
-                for f in self.char_fields:
-                    setattr(a, f, row[self.headers.index(f)])
+                for i, (k, v) in enumerate(self.headers.iteritems()):
+                    if v == 'char':
+                        setattr(a, k, row[i])
+                    if v == 'int' and row[i] != '':
+                        setattr(a, k, int(row[i]))
+                    if v == 'date' and row[i] != '':
+                        setattr(a, k, parsedate(row[i]))
 
-                for f in self.integer_fields:
-                    if row[self.headers.index(f)] != '':
-                        setattr(a, f, int(row[self.headers.index(f)]))
-
-                for f in self.date_fields:
-                    if row[self.headers.index(f)] != '':
-                        setattr(a, f, parsedate(row[self.headers.index(f)]))
-
-                a.postcode_index = row[self.headers.index('postcode')].\
-                    replace(' ', '').lower()
+                a.postcode_index = row[postcode_idx].replace(' ', '').lower()
 
                 a.point = Point(
-                    float(row[self.headers.index('x_coordinate')]),
-                    float(row[self.headers.index('y_coordinate')]),
+                    float(row[x_coord_idx]),
+                    float(row[y_coord_idx]),
                     srid=27700
                 )
 
