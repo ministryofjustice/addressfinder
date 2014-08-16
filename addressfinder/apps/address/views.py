@@ -20,7 +20,7 @@ class AddressViewSet(viewsets.ReadOnlyModelViewSet):
         return self.queryset.filter(postcode_index=postcode)
 
 
-class PostcodeView(generics.ListAPIView):
+class PostcodeView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         postcode = kwargs.get('postcode', '').replace(' ', '').lower()
 
