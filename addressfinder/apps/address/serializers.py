@@ -8,6 +8,9 @@ class AddressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Address
-        fields = ('uprn', 'building_name', 'sub_building_name',
+        fields = ('uprn', 'organisation_name', 'department_name',
+                  'po_box_number', 'building_name', 'sub_building_name',
                   'building_number', 'thoroughfare_name',
-                  'dependent_locality', 'post_town', 'postcode', 'point')
+                  'dependent_thoroughfare_name', 'dependent_locality',
+                  'double_dependent_locality', 'post_town', 'postcode',
+                  'postcode_type', 'point')
