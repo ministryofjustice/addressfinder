@@ -1,5 +1,7 @@
 import os
 import csv
+from multiprocessing import Pool
+
 from collections import OrderedDict
 
 from django.core.management.base import BaseCommand, CommandError
@@ -11,8 +13,17 @@ from address.models import Address
 
 
 class Command(BaseCommand):
-    args = 'CSV_FILE'
+    args = '<csv_file csv_file...>'
 
+    def handle(self, *args, **options):
+        if len(args) == 0:
+            raise CommandError('You must specify at least one CSV file')
+
+        p = Pool()
+        p.map(import_csv, args)
+
+
+def import_csv(filename):
     headers = OrderedDict([
         ("uprn", "char"),
         ("os_address_toid", "char"),
@@ -41,43 +52,37 @@ class Command(BaseCommand):
         ("process_date", "date"),
     ])
 
-    def handle(self, *args, **options):
-        if len(args) == 0:
-            raise CommandError('You must specify a CSV file')
+    if not os.access(filename, os.R_OK):
+        raise CommandError('CSV file could not be read')
 
-        filename = args[0]
+    uprn_idx = headers.keys().index('uprn')
+    postcode_idx = headers.keys().index('postcode')
+    x_coord_idx = headers.keys().index('x_coordinate')
+    y_coord_idx = headers.keys().index('y_coordinate')
 
-        if not os.access(filename, os.R_OK):
-            raise CommandError('CSV file could not be read')
+    with open(filename, 'rb') as csvfile:
+        for row in csv.reader(csvfile):
+            print 'Importing UPRN %s' % row[uprn_idx]
 
-        uprn_idx = self.headers.keys().index('uprn')
-        postcode_idx = self.headers.keys().index('postcode')
-        x_coord_idx = self.headers.keys().index('x_coordinate')
-        y_coord_idx = self.headers.keys().index('y_coordinate')
+            try:
+                a = Address.objects.get(uprn=row[uprn_idx])
+            except Address.DoesNotExist:
+                a = Address()
 
-        with open(filename, 'rb') as csvfile:
-            for row in csv.reader(csvfile):
-                print 'Importing UPRN %s' % row[uprn_idx]
+            for i, (k, v) in enumerate(headers.iteritems()):
+                if v == 'char':
+                    setattr(a, k, row[i])
+                if v == 'int' and row[i] != '':
+                    setattr(a, k, int(row[i]))
+                if v == 'date' and row[i] != '':
+                    setattr(a, k, parsedate(row[i]))
 
-                try:
-                    a = Address.objects.get(uprn=row[uprn_idx])
-                except Address.DoesNotExist:
-                    a = Address()
+            a.postcode_index = row[postcode_idx].replace(' ', '').lower()
 
-                for i, (k, v) in enumerate(self.headers.iteritems()):
-                    if v == 'char':
-                        setattr(a, k, row[i])
-                    if v == 'int' and row[i] != '':
-                        setattr(a, k, int(row[i]))
-                    if v == 'date' and row[i] != '':
-                        setattr(a, k, parsedate(row[i]))
+            a.point = Point(
+                float(row[x_coord_idx]),
+                float(row[y_coord_idx]),
+                srid=27700
+            )
 
-                a.postcode_index = row[postcode_idx].replace(' ', '').lower()
-
-                a.point = Point(
-                    float(row[x_coord_idx]),
-                    float(row[y_coord_idx]),
-                    srid=27700
-                )
-
-                a.save()
+            a.save()
