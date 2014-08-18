@@ -134,7 +134,7 @@ class Address(models.Model):
     postcode_index = models.CharField(max_length=7, db_index=True)
     postcode_locator = models.CharField(max_length=8)
     postcode_type = models.CharField(
-        max_length=1, choices=POSTCODE_TYPE_CODES.CHOICES)
+        max_length=1, choices=POSTCODE_TYPE_CODES.CHOICES, blank=True)
     postal_address = models.CharField(
         max_length=1, choices=POSTAL_ADDRESS_CODES.CHOICES)
     po_box_number = models.CharField(max_length=6, default='', blank=True)
@@ -154,8 +154,15 @@ class Address(models.Model):
         verbose_name_plural = 'addresses'
 
     def __unicode__(self):
-        return "%s - %s" % (self.uprn, self.postcode)
+        name = "%s - %s" % (self.uprn, self.location_postcode)
+        if self.postcode == '':
+            name += ' (approx.)'
+        return name
 
     @property
     def point_geojson_dict(self):
         return json.loads(self.point.geojson)
+
+    @property
+    def location_postcode(self):
+        return self.postcode if self.postcode != '' else self.postcode_locator

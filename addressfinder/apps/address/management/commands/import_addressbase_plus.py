@@ -105,6 +105,7 @@ def import_csv(filename):
 
     uprn_idx = headers.keys().index('uprn')
     postcode_idx = headers.keys().index('postcode')
+    postcode_locator_idx = headers.keys().index('postcode_locator')
     x_coord_idx = headers.keys().index('x_coordinate')
     y_coord_idx = headers.keys().index('y_coordinate')
 
@@ -127,7 +128,9 @@ def import_csv(filename):
                 if v == 'yesno' and row[i] != '':
                     setattr(a, k, True if row[i] == 'Y' else False)
 
-            a.postcode_index = row[postcode_idx].replace(' ', '').lower()
+            postcode = (row[postcode_idx] if row[postcode_idx] != ''
+                        else row[postcode_locator_idx])
+            a.postcode_index = postcode.replace(' ', '').lower()
 
             a.point = Point(
                 float(row[x_coord_idx]),
