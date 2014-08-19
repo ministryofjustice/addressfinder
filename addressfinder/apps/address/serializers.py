@@ -1,10 +1,10 @@
 from .models import Address
 
 from rest_framework import serializers
+from rest_framework_gis.serializers import GeoModelSerializer
 
 
-class AddressSerializer(serializers.ModelSerializer):
-    point = serializers.Field(source='point_geojson_dict')
+class AddressSerializer(GeoModelSerializer):
     formatted_address = serializers.Field(source='formatted_address')
 
     class Meta:

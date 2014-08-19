@@ -37,10 +37,6 @@ class Address(models.Model):
 
     objects = models.GeoManager()
 
-    @property
-    def point_geojson_dict(self):
-        return json.loads(self.point.geojson)
-
     def __unicode__(self):
         return "%s - %s" % (self.uprn, self.postcode)
 
