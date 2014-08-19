@@ -61,7 +61,7 @@ $ ./manage.py runserver
 
 You can now access [Django Admin](http://127.0.0.1/admin/authtoken/token/) to create a token for your superuser.
 
-### API endpoints
+## Usage
 
 Access the API with your token in the Authorization header:
 
@@ -82,10 +82,53 @@ http://127.0.0.1:8000/addresses/?postcode=sw1a1aa&fields=formatted_address,point
 
 View the available fields [here](https://github.com/ministryofjustice/addressfinder/blob/develop/addressfinder/apps/address/serializers.py#L25)
 
+Example response:
+
+```json
+[
+  {
+    "uprn": "10033544614",
+    "organisation_name": "BUCKINGHAM PALACE",
+    "department_name": "",
+    "po_box_number": "",
+    "building_name": "",
+    "sub_building_name": "",
+    "building_number": null,
+    "thoroughfare_name": "",
+    "dependent_thoroughfare_name": "",
+    "dependent_locality": "",
+    "double_dependent_locality": "",
+    "post_town": "LONDON",
+    "postcode": "SW1A 1AA",
+    "postcode_type": "L",
+    "formatted_address": "Buckingham Palace\nLondon\nSW1A 1AA",
+    "point": {
+      "type": "Point",
+      "coordinates": [
+        -0.141587558526369,
+        51.50100893654096
+      ]
+    }
+  }
+]
+```
+
 #### Lat/lon lookup
 
 ```
 http://127.0.0.1:8000/postcodes/sw1a1aa/
+```
+
+Example response:
+
+```json
+{
+  "type": "Point",
+  "coordinates": [
+    -0.141587558526369,
+    51.50100893654096
+  ]
+}
 ```
 
 This method returns a lat/lon point for the centre of the specified postcode area only.
