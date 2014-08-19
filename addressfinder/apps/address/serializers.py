@@ -7,6 +7,19 @@ from rest_framework_gis.serializers import GeoModelSerializer
 class AddressSerializer(GeoModelSerializer):
     formatted_address = serializers.Field(source='formatted_address')
 
+    def __init__(self, *args, **kwargs):
+        super(AddressSerializer, self).__init__(*args, **kwargs)
+
+        fields = self.context['request'].QUERY_PARAMS.get('fields')
+
+        if fields:
+            fields = fields.split(',')
+            # Drop any fields that are not specified in the `fields` argument.
+            allowed = set(fields)
+            existing = set(self.fields.keys())
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
     class Meta:
         model = Address
         fields = ('uprn', 'organisation_name', 'department_name',
