@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 class AddressSerializer(serializers.ModelSerializer):
     point = serializers.Field(source='point_geojson_dict')
+    formatted_address = serializers.Field(source='formatted_address')
 
     class Meta:
         model = Address
@@ -13,4 +14,4 @@ class AddressSerializer(serializers.ModelSerializer):
                   'building_number', 'thoroughfare_name',
                   'dependent_thoroughfare_name', 'dependent_locality',
                   'double_dependent_locality', 'post_town', 'postcode',
-                  'postcode_type', 'point')
+                  'postcode_type', 'formatted_address', 'point')

@@ -2,6 +2,8 @@ import json
 
 from django.contrib.gis.db import models
 
+from .utils import AddressFormatter
+
 
 class Address(models.Model):
     uprn = models.CharField(max_length=12, primary_key=True)
@@ -44,3 +46,7 @@ class Address(models.Model):
 
     class Meta:
         verbose_name_plural = 'addresses'
+
+    @property
+    def formatted_address(self):
+        return AddressFormatter.format(self)
