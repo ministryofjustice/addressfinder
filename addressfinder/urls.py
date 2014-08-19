@@ -11,9 +11,9 @@ router.register(r'addresses', views.AddressViewSet)
 
 
 urlpatterns = patterns('',
-    url(r'^api/postcodes/(?P<postcode>[a-zA-Z0-9\s]+)/$',
+    url(r'^postcodes/(?P<postcode>[a-zA-Z0-9\s]+)/$',
         views.PostcodeView.as_view()),
-    url(r'^api/', include(router.urls)),
+    url(r'^', include(router.urls)),
 
     url(r'^admin/', include(admin.site.urls)),
 )
