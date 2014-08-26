@@ -42,6 +42,7 @@ class Address(models.Model):
 
     class Meta:
         verbose_name_plural = 'addresses'
+        ordering = ['building_number', 'building_name', 'sub_building_name']
 
     @property
     def formatted_address(self):
