@@ -34,7 +34,7 @@ RUN  mkdir -p /var/log/nginx/addressfinder
 ADD ./docker/addressfinder.ini /etc/wsgi/conf.d/addressfinder.ini
 
 # Define mountable directories.
-VOLUME ["/data", "/var/log/nginx", "/var/log/wsgi"]
+VOLUME ["/var/log/nginx", "/var/log/wsgi"]
 
 # APP_HOME
 ENV APP_HOME /home/app/django
