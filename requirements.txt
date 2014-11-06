@@ -1,4 +1,4 @@
-https://www.djangoproject.com/download/1.7c3/tarball/#egg=Django==1.7c3
+Django==1.7.1
 dateutils==0.6.6
 djangorestframework==2.3.14
 psycopg2==2.5.3
