@@ -38,7 +38,7 @@ class Address(models.Model):
     objects = models.GeoManager()
 
     def __unicode__(self):
-        return "%s - %s" % (self.uprn, self.postcode)
+        return u"%s - %s" % (self.uprn, self.postcode)
 
     class Meta:
         verbose_name_plural = 'addresses'
