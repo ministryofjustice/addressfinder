@@ -3,6 +3,7 @@ import json
 from django.contrib.gis.db import models
 
 from .utils import AddressFormatter
+from areas.models import Area
 
 
 class Address(models.Model):
@@ -47,3 +48,7 @@ class Address(models.Model):
     @property
     def formatted_address(self):
         return AddressFormatter.format(self)
+
+    @property
+    def police_areas(self):
+        return Area.objects.filter(geom__contains=self.point, area_type='POL')

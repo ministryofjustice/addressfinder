@@ -1,4 +1,5 @@
 from .models import Address
+from areas.serializers import AreaSerializer
 
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoModelSerializer
@@ -6,6 +7,7 @@ from rest_framework_gis.serializers import GeoModelSerializer
 
 class AddressSerializer(GeoModelSerializer):
     formatted_address = serializers.Field(source='formatted_address')
+    police_areas = AreaSerializer()
 
     def __init__(self, *args, **kwargs):
         super(AddressSerializer, self).__init__(*args, **kwargs)
@@ -27,4 +29,5 @@ class AddressSerializer(GeoModelSerializer):
                   'building_number', 'thoroughfare_name',
                   'dependent_thoroughfare_name', 'dependent_locality',
                   'double_dependent_locality', 'post_town', 'postcode',
-                  'postcode_type', 'formatted_address', 'point')
+                  'postcode_type', 'formatted_address', 'point',
+                  'police_areas')
