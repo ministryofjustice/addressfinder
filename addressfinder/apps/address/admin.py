@@ -1,6 +1,6 @@
-from django.contrib.gis import admin
+# from django.contrib.gis import admin
 
-from .models import Address
+# from .models import Address
 
 
-admin.site.register(Address, admin.OSMGeoAdmin)
+# admin.site.register(Address, admin.OSMGeoAdmin)

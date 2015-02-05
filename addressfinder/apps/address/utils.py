@@ -3,7 +3,7 @@ import re
 from titlecase import titlecase
 
 
-class AddressFormatter(object):
+class DeliveryPointAddressFormatter(object):
     """
     Heavily inspired by https://github.com/DanMeakin/getputpostcode
     """

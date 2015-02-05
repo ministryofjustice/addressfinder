@@ -6,3 +6,4 @@ python-dateutil==2.2
 titlecase==0.7.1
 djangorestframework-gis==0.3
 uWSGI==2.0.6
+django-extended-choices==0.3.0
