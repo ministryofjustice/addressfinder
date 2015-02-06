@@ -84,9 +84,27 @@ class DeliveryPointAddressFormatterTestCase(TestCase):
         self.assertEqual(blpu.parent_uprn, '100020576016')
         self.assertEqual(blpu.coords.x, -0.13270949875119267)
         self.assertEqual(blpu.coords.y, 51.31577198495121)
+        self.assertEqual(blpu.rpc, constants.RPC_CODE.VISUAL_CENTRE)
+        self.assertEqual(blpu.local_custodian_code, 5240)
+        self.assertEqual(blpu.start_date, date(year=2001, month=3, day=19))
+        self.assertEqual(blpu.end_date, date(year=2001, month=3, day=15))
+        self.assertEqual(blpu.last_update_date, date(year=2001, month=3, day=13))
+        self.assertEqual(blpu.entry_date, date(year=2001, month=3, day=12))
+        self.assertEqual(blpu.postal_address, constants.POSTAL_ADDRESS_CODE.SINGLE)
+        self.assertEqual(blpu.postcode_locator, 'SW1A 1AA')
+        self.assertEqual(blpu.multi_occ_count, 0)
 
+        # ApplicationCrossReference
         self.assertEqual(ApplicationCrossReference.objects.count(), 1)
+
+        # LPI
         self.assertEqual(LPI.objects.count(), 1)
+
+        # DeliveryPointAddress
         self.assertEqual(DeliveryPointAddress.objects.count(), 1)
+
+        # Organisation
         self.assertEqual(Organisation.objects.count(), 1)
+
+        # Classification
         self.assertEqual(Classification.objects.count(), 1)
