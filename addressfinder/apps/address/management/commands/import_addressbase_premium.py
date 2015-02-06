@@ -1,11 +1,13 @@
 import time
 import os
 import csv
+from optparse import make_option
 from multiprocessing import Pool
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from address.models import DeliveryPointAddress, BLPU, Classification, \
     LPI, Organisation, ApplicationCrossReference, Street, StreetDescriptor, \
@@ -32,9 +34,6 @@ class BaseImporter(object):
             if not f.__class__.__name__ == 'CharField':
                 self.non_char_field_names.append(f.name)
 
-    def get_ab_primary_key(self, row):
-        return row[self.ab_pk_field_index]
-
     def post_process(self, row, obj_data):
         return obj_data
 
@@ -54,21 +53,27 @@ class BaseImporter(object):
         if change_type == 'I':
             self.inserts.append(self.model(**obj_data))
         elif change_type == 'U':
-            self.updates.append(obj_data)
+            self.updates.append(self.model(**obj_data))
         elif change_type == 'D':
-            self.deletes.append(obj_data[self.model._meta.pk.name])
+            self.deletes.append(self.model(**obj_data))
         else:
             raise ValidationError(
                 u"change type %s not supported" % change_type
             )
 
     def save(self):
-        self.model.objects.bulk_create(self.inserts)
-        for obj_data in self.updates:
-            self.model.objects.filter(pk=obj_data[self.model._meta.pk.name]).update(**obj_data)
-        self.model.objects.filter(pk__in=self.deletes).delete()
+        tot_inserts = len(self.inserts)
+        tot_updates = len(self.updates)
+        tot_deletes = len(self.deletes)
 
-        return (len(self.inserts), len(self.updates), len(self.deletes))
+        # optimization, delete 'updates' and reinsert them
+        to_delete = [obj.pk for obj in self.updates + self.deletes]
+        self.model.objects.filter(pk__in=to_delete).delete()
+
+        self.inserts += self.updates
+        self.model.objects.bulk_create(self.inserts)
+
+        return (tot_inserts, tot_updates, tot_deletes)
 
 
 class DeliveryPointAddressImporter(BaseImporter):
@@ -151,6 +156,17 @@ class StreetDescriptorImporter(BaseImporter):
     headers = import_settings.HEADERS_STEET_DESCRIPTOR
     model = StreetDescriptor
 
+    def __init__(self):
+        super(StreetDescriptorImporter, self).__init__()
+        self.usrn_idx = self.headers.index('usrn')
+        self.language_idx = self.headers.index('language')
+
+    def post_process(self, row, obj_data):
+        obj_data['sd_key'] = '%s%s' % (
+            row[self.usrn_idx], row[self.language_idx]
+        )
+        return obj_data
+
 
 class SuccessorRecordImporter(BaseImporter):
     headers = import_settings.HEADERS_SUCCESSOR
@@ -161,8 +177,8 @@ def get_importers():
     return {
         '11': StreetImporter(),
         '15': StreetDescriptorImporter(),
-        '23': ApplicationCrossReferenceImporter(),
         '21': BLPUImporter(),
+        '23': ApplicationCrossReferenceImporter(),
         '24': LPIImporter(),
         '28': DeliveryPointAddressImporter(),
         '30': SuccessorRecordImporter(),
@@ -171,44 +187,119 @@ def get_importers():
     }
 
 
-def import_csv(filename):
-    if not os.access(filename, os.R_OK):
-        raise CommandError('CSV file could not be read')
+def import_csv(filepath):
+    start = time.time()
 
+    # import
     importers = get_importers()
-    with open(filename, 'rb') as csvfile:
+    with open(filepath, 'rb') as csvfile:
         for row in csv.reader(csvfile):
             try:
                 importers[row[0]].import_row(row)
             except KeyError:
                 pass
 
-    tot_inserts = 0
-    tot_updates = 0
-    tot_deletes = 0
-    for importer in importers.values():
-        i, u, d = importer.save()
-        tot_inserts += i
-        tot_updates += u
-        tot_deletes += d
+    filename = os.path.basename(filepath)
+    try:
+        with transaction.atomic():
+            # save
+            tot_inserts = 0
+            tot_updates = 0
+            tot_deletes = 0
+            for importer in importers.values():
+                i, u, d = importer.save()
+                tot_inserts += i
+                tot_updates += u
+                tot_deletes += d
 
-    print 'Recap:'
-    print 'Inserts: %d' % tot_inserts
-    print 'Updates: %d' % tot_updates
-    print 'Deletes: %d' % tot_deletes
+            # recap
+            end = time.time()
+            print '\nFinished processing %s, took: %s secs' % (
+                filename, end - start
+            )
+            print 'Recap:'
+            print 'Inserts: %d' % tot_inserts
+            print 'Updates: %d' % tot_updates
+            print 'Deletes: %d' % tot_deletes
+    except Exception as e:
+        print "File %s not imported because of exception" % filename
+        raise e
 
 
 class Command(BaseCommand):
-    args = '<csv_file csv_file...>'
+    args = '<base-dir>'
+    option_list = BaseCommand.option_list + (
+        make_option(
+            '--from',
+            action='store',
+            dest='from',
+            type="int",
+            default=1,
+            help='First file number to process (default 1)'
+        ),
+        make_option(
+            '--to',
+            action='store',
+            dest='to',
+            type="int",
+            default=999,
+            help='Last file number to process (default to last in folder)'
+        ),
+        make_option(
+            '--no-multiprocessing',
+            action='store_true',
+            dest='no_multiprocessing',
+            default=False,
+            help='If True, it will import files one after another'
+        )
+    )
+
+    def build_filepaths(self):
+        filepaths = []
+
+        index = self.from_filenum
+        path_template = self.get_path_template_for_filenum(self.from_filenum)
+        while index <= self.to_filenum:
+            filename = path_template % ("%03d" % index, )
+            if os.access(filename, os.R_OK):
+                filepaths.append(filename)
+                index += 1
+            else:
+                # see if it's in another folder
+                try:
+                    path_template = self.get_path_template_for_filenum(index)
+                except CommandError:
+                    self.to_filenum = index - 1
+                    break
+        return filepaths
+
+    def get_path_template_for_filenum(self, filenum):
+        looking_for = "%03d.csv" % filenum
+        for root, dirs, files in os.walk(self.base_dir):
+            for file in files:
+                if file.endswith(looking_for):
+                    return os.path.join(
+                        root, file.replace(looking_for, '%s.csv')
+                    )
+        raise CommandError(
+            'File ending in %s not found in %s' % (
+                looking_for, self.base_dir
+            )
+        )
 
     def handle(self, *args, **options):
-        if len(args) == 0:
-            raise CommandError('You must specify at least one CSV file')
+        if len(args) != 1:
+            raise CommandError('You must specify only the base dir as arg')
+        self.base_dir = args[0]
 
-        start = time.time()
-        import_csv(args[0])
-        end = time.time()
-        # p = Pool()
-        # p.map(import_csv, args)
+        self.from_filenum = options['from']
+        self.to_filenum = options['to']
 
-        print 'Took: %s secs' % (end - start)
+        filepaths = self.build_filepaths()
+
+        if options['no_multiprocessing']:
+            for filepath in filepaths:
+                import_csv(filepath)
+        else:
+            p = Pool(maxtasksperchild=4)
+            p.map(import_csv, filepaths)

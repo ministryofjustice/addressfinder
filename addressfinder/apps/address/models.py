@@ -225,8 +225,11 @@ class StreetDescriptor(models.Model):
     """
     Definition - a descriptive identifier providing a reference
     for the street in the form of its location.
+
+    Note: no fixed pk. The pk is really (usrn, language)
+        so building one == usrn + language
     """
-    # NOTE: no fixed fk so how does it get updated/deleted?
+    sd_key = models.CharField(max_length=15, primary_key=True)  # == usrn + language
     usrn = models.CharField(max_length=12)  # fk to Street
     street_description = models.CharField(max_length=100)
     locality_name = models.CharField(max_length=35, blank=True)
@@ -238,6 +241,9 @@ class StreetDescriptor(models.Model):
 
     def __unicode__(self):
         return u"%s: %s" % (self.usrn, self.street_description)
+
+    class Meta:
+        unique_together = (("usrn", "language"),)
 
 
 class SuccessorRecord(models.Model):
@@ -260,4 +266,4 @@ class SuccessorRecord(models.Model):
         )
 
 
-# TODO metadata ??
+# TODO metadata

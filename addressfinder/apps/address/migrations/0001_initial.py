@@ -176,7 +176,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='StreetDescriptor',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('sd_key', models.CharField(max_length=15, serialize=False, primary_key=True)),
                 ('usrn', models.CharField(max_length=12)),
                 ('street_description', models.CharField(max_length=100)),
                 ('locality_name', models.CharField(max_length=35, blank=True)),
@@ -202,5 +202,9 @@ class Migration(migrations.Migration):
             options={
             },
             bases=(models.Model,),
+        ),
+        migrations.AlterUniqueTogether(
+            name='streetdescriptor',
+            unique_together=set([('usrn', 'language')]),
         ),
     ]
