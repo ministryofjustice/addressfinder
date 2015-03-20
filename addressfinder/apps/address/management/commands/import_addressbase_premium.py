@@ -34,14 +34,14 @@ class BaseImporter(object):
             if not f.__class__.__name__ == 'CharField':
                 self.non_char_field_names.append(f.name)
 
+        self._headers_data = [(i, h) for i, h in enumerate(self.headers) if h in self.field_names]
+
     def post_process(self, row, obj_data):
         return obj_data
 
     def import_row(self, row):
         obj_data = {}
-        for i, h in enumerate(self.headers):
-            if h not in self.field_names:
-                continue
+        for i, h in self._headers_data:
             val = row[i]
             if not val and h in self.non_char_field_names:
                 val = None
@@ -221,10 +221,8 @@ def import_csv(filepath):
             print 'Inserts: %d' % tot_inserts
             print 'Updates: %d' % tot_updates
             print 'Deletes: %d' % tot_deletes
-    except Exception as e:
+    except Exception:
         print "File %s not imported because of exception" % filename
-        raise e
-
 
 class Command(BaseCommand):
     args = '<base-dir>'

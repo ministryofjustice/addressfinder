@@ -1,3 +1,5 @@
 *.pyc
 .DS_Store
 addressfinder/local.py
+env
+venv
