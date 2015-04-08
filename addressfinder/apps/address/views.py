@@ -32,3 +32,19 @@ class PostcodeView(generics.RetrieveAPIView):
                             status=status.HTTP_200_OK)
 
         return Response(None, status=status.HTTP_404_NOT_FOUND)
+
+class PartialPostcodeView(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        # NOTE: we add on a space and lookup the value in the formatted postcode field,
+        #       NOT the postcode_index, to allow us to differentiate, say, 
+        #       N1 from N11, N12, etc
+        postcode = kwargs.get('postcode', '').replace(' ', '').upper()
+
+        geom = Address.objects.filter(
+            postcode__startswith=postcode + ' ').collect(field_name='point')
+
+        if geom:
+            return Response(json.loads(geom.centroid.geojson),
+                            status=status.HTTP_200_OK)
+
+        return Response(None, status=status.HTTP_404_NOT_FOUND)
