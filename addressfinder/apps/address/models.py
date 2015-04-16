@@ -26,6 +26,7 @@ class Address(models.Model):
     point = models.PointField()
     postcode = models.CharField(max_length=8)
     postcode_index = models.CharField(max_length=7, db_index=True)
+    postcode_area = models.CharField(max_length=4, db_index=True, blank=True, default='')
     postcode_type = models.CharField(max_length=1)
     rpc = models.PositiveSmallIntegerField()
     change_type = models.CharField(max_length=1)
