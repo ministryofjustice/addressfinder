@@ -48,3 +48,11 @@ class Address(models.Model):
     @property
     def formatted_address(self):
         return AddressFormatter.format(self)
+
+class PostcodeGssCode(models.Model):
+    postcode_index = models.CharField(max_length=7, db_index=True)
+    local_authority_gss_code = models.CharField(max_length=9, db_index=True, primary_key=True)
+
+class LocalAuthority(models.Model):
+    gss_code = models.CharField(max_length=9, db_index=True, primary_key=True)
+    name = models.CharField(max_length=128,db_index=True)
