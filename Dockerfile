@@ -15,7 +15,7 @@ RUN useradd -m -d /srv/addressfinder addressfinder
 ADD . /srv/addressfinder
 RUN rm -rf /srv/tribunals/.git
 RUN chown -R addressfinder: /srv/addressfinder
-RUN pip install -r requirements.txt
+RUN pip install -r /srv/addressfinder/requirements.txt
 
 EXPOSE 8000
 USER addressfinder
