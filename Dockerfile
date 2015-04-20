@@ -12,10 +12,12 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN useradd -m -d /srv/addressfinder addressfinder
 
+ADD ./requirements.txt /
+RUN pip install -r /requirements.txt
+
 ADD . /srv/addressfinder
 RUN rm -rf /srv/tribunals/.git
 RUN chown -R addressfinder: /srv/addressfinder
-RUN pip install -r /srv/addressfinder/requirements.txt
 
 EXPOSE 8000
 USER addressfinder
